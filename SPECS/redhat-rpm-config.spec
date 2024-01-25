@@ -6,7 +6,7 @@
 
 Summary:              Red Hat specific rpm configuration files
 Name:                 redhat-rpm-config
-Version:              199
+Version:              201
 Release:              1%{?dist}
 # No version specified.
 License:              GPL+
@@ -127,6 +127,9 @@ Requires:             %{_bindir}/file
 Requires:             %{_bindir}/grep
 Requires:             %{_bindir}/sed
 Requires:             %{_bindir}/xargs
+
+# for brp-llvm-compile-lto-elf
+Requires:             (llvm if clang)
 
 # -fstack-clash-protection and -fcf-protection require GCC 8.
 Conflicts:            gcc < 8.0.1-0.22
@@ -251,8 +254,16 @@ install -p -m 644 -t %{buildroot}%{_rpmluadir}/fedora/srpm forge.lua
 %doc buildflags.md
 
 %changelog
-* Thu Jan 25 2024 Release Engineering <releng@openela.org> - 199
+* Thu Jan 25 2024 Release Engineering <releng@openela.org> - 201
 - Add OpenELA to dist.sh
+
+* Mon May 08 2023 Nikita Popov <npopov@redhat.com> - 201-1
+- Add llvm dependency if clang toolchain used
+- Resolves: rhbz#2193406
+
+* Wed Apr 19 2023 Nikita Popov <npopov@redhat.com> - 200-1
+- Change clang LTO default to ThinLTO
+- Resolves: rhbz#2178788
 
 * Mon Feb 13 2023 Miro Hrončok <mhroncok@redhat.com> - 199-1
 - Add pyproject-srpm-macros to the default buildroot
