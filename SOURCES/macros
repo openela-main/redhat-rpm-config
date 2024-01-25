@@ -1,0 +1,268 @@
+# Per-platform rpm configuration file.
+
+#==============================================================================
+# ---- per-platform macros.
+#
+%_vendor		redhat
+%_os			linux
+%_target_platform	%{_target_cpu}-%{_vendor}-%{_target_os}%{?_gnu}
+
+#==============================================================================
+# ---- configure macros.  note that most of these are inherited
+#      from the defaults.
+#
+%_localstatedir		/var
+
+%_pkgdocdir             %{_docdir}/%{name}
+%_docdir_fmt            %%{NAME}
+
+%_fmoddir		%{_libdir}/gfortran/modules
+
+%_enable_debug_packages 1
+%_include_minidebuginfo 1
+%_include_gdb_index     1
+%_debugsource_packages  1
+%_debuginfo_subpackages 1
+
+#==============================================================================
+# ---- compiler flags.
+
+# C compiler flags.  This is traditionally called CFLAGS in makefiles.
+# Historically also available as %%{optflags}, and %%build sets the
+# environment variable RPM_OPT_FLAGS to this value.
+%build_cflags %{optflags}
+
+# C++ compiler flags.  This is traditionally called CXXFLAGS in makefiles.
+%build_cxxflags %{optflags}
+
+# Fortran compiler flags.  Makefiles use both FFLAGS and FCFLAGS as
+# the corresponding variable names.
+%build_fflags %{optflags} -I%{_fmoddir}
+
+# Link editor flags.  This is usually called LDFLAGS in makefiles.
+# (Some makefiles use LFLAGS instead.)  The default value assumes that
+# the flags, while intended for ld, are still passed through the gcc
+# compiler driver.  At the beginning of %%build, the environment
+# variable RPM_LD_FLAGS to this value.
+%build_ldflags -Wl,-z,relro %{_ld_symbols_flags} %{_hardened_ldflags}
+
+# Expands to shell code to seot the compiler/linker environment
+# variables CFLAGS, CXXFLAGS, FFLAGS, FCFLAGS, LDFLAGS if they have
+# not been set already.  RPM_OPT_FLAGS and RPM_LD_FLAGS have already
+# been set implicitly at the start of the %%build section.
+%set_build_flags \
+  CFLAGS="${CFLAGS:-%{build_cflags}}" ; export CFLAGS ; \
+  CXXFLAGS="${CXXFLAGS:-%{build_cxxflags}}" ; export CXXFLAGS ; \
+  FFLAGS="${FFLAGS:-%{build_fflags}}" ; export FFLAGS ; \
+  FCFLAGS="${FCFLAGS:-%{build_fflags}}" ; export FCFLAGS ; \
+  LDFLAGS="${LDFLAGS:-%{build_ldflags}}" ; export LDFLAGS
+
+# Internal-only.  Do not use.  Expand a variable and strip the flags
+# not suitable to extension builders.
+%__extension_strip_flags() %{lua:
+local name = rpm.expand("%{1}")
+local value = " " .. rpm.expand("%{build_" .. name .. "}")
+local result = string.gsub(value, "%s+-specs=[^%s]+", " ")
+print(result)
+}
+
+# Variants of CFLAGS, CXXFLAGS, FFLAGS, LDFLAGS for use within
+# extension builders.
+%extension_cflags %{__extension_strip_flags cflags}
+%extension_cxxflags %{__extension_strip_flags cxxflags}
+%extension_fflags %{__extension_strip_flags fflags}
+%extension_ldflags %{__extension_strip_flags ldflags}
+
+# Deprecated names.  For backwards compatibility only.
+%__global_cflags %{build_cflags}
+%__global_cxxflags %{build_cxxflags}
+%__global_fflags %{build_fflags}
+%__global_fcflags %{build_fflags}
+%__global_ldflags %{build_ldflags}
+
+#==============================================================================
+# ---- configure and makeinstall.
+#
+%_configure_gnuconfig_hack	1
+%_configure_libtool_hardening_hack	1
+# If defined, _configure_disable_silent_rules will cause --disable-silent-rules
+# to be added to the list of options passed to the configure script.
+# Eventually we'll want to turn this on by default, but this gives packagers a
+# way to turn it back off.
+# %_configure_disable_silent_rules 1
+%configure \
+  %{set_build_flags}; \
+  [ "%_configure_gnuconfig_hack" = 1 ] && for i in $(find $(dirname %{_configure}) -name config.guess -o -name config.sub) ; do \
+      [ -f /usr/lib/rpm/redhat/$(basename $i) ] && %{__rm} -f $i && %{__cp} -fv /usr/lib/rpm/redhat/$(basename $i) $i ; \
+  done ; \
+  [ "%_configure_libtool_hardening_hack" = 1 ] && [ x != "x%{_hardened_ldflags}" ] && \
+      for i in $(find . -name ltmain.sh) ; do \
+        %{__sed} -i.backup -e 's~compiler_flags=$~compiler_flags="%{_hardened_ldflags}"~' $i \
+      done ; \
+  %{_configure} --build=%{_build} --host=%{_host} \\\
+	--program-prefix=%{?_program_prefix} \\\
+	--disable-dependency-tracking \\\
+	%{?_configure_disable_silent_rules:--disable-silent-rules} \\\
+	--prefix=%{_prefix} \\\
+	--exec-prefix=%{_exec_prefix} \\\
+	--bindir=%{_bindir} \\\
+	--sbindir=%{_sbindir} \\\
+	--sysconfdir=%{_sysconfdir} \\\
+	--datadir=%{_datadir} \\\
+	--includedir=%{_includedir} \\\
+	--libdir=%{_libdir} \\\
+	--libexecdir=%{_libexecdir} \\\
+	--localstatedir=%{_localstatedir} \\\
+	--sharedstatedir=%{_sharedstatedir} \\\
+	--mandir=%{_mandir} \\\
+	--infodir=%{_infodir}
+
+# Maximum number of CPU's to use when building, 0 for unlimited.
+#
+# This was for some time capped at 16.  Please see
+# https://bugzilla.redhat.com/show_bug.cgi?id=669638 and
+# https://bugzilla.redhat.com/show_bug.cgi?id=1384938 for the situation
+# surrounding this.
+#%_smp_ncpus_max 0
+%_smp_mflags %([ -z "$RPM_BUILD_NCPUS" ] \\\
+	&& RPM_BUILD_NCPUS="`/usr/bin/getconf _NPROCESSORS_ONLN`"; \\\
+        ncpus_max=%{?_smp_ncpus_max}; \\\
+        if [ -n "$ncpus_max" ] && [ "$ncpus_max" -gt 0 ] && [ "$RPM_BUILD_NCPUS" -gt "$ncpus_max" ]; then RPM_BUILD_NCPUS="$ncpus_max"; fi; \\\
+        if [ "$RPM_BUILD_NCPUS" -gt 1 ]; then echo "-j$RPM_BUILD_NCPUS"; fi)
+
+#==============================================================================
+# ---- Build policy macros.
+#
+#
+#---------------------------------------------------------------------
+#	Expanded at beginning of %install scriptlet.
+#
+
+%__spec_install_pre %{___build_pre}\
+    [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "${RPM_BUILD_ROOT}"\
+    mkdir -p `dirname "$RPM_BUILD_ROOT"`\
+    mkdir "$RPM_BUILD_ROOT"\
+%{nil}
+
+#---------------------------------------------------------------------
+#	Expanded at end of %install scriptlet.
+#
+
+%__arch_install_post   /usr/lib/rpm/check-buildroot
+
+# Build root policy macros. Standard naming:
+# convert all '-' in basename to '_', add two leading underscores.
+%__brp_ldconfig /usr/lib/rpm/redhat/brp-ldconfig
+%__brp_compress /usr/lib/rpm/brp-compress
+%__brp_strip /usr/lib/rpm/brp-strip %{__strip}
+%__brp_strip_comment_note /usr/lib/rpm/brp-strip-comment-note %{__strip} %{__objdump}
+%__brp_strip_static_archive /usr/lib/rpm/brp-strip-static-archive %{__strip}
+%__brp_python_bytecompile /usr/lib/rpm/brp-python-bytecompile "" %{?_python_bytecompile_errors_terminate_build}
+%__brp_python_hardlink /usr/lib/rpm/brp-python-hardlink
+# __brp_mangle_shebangs_exclude - shebangs to exclude
+# __brp_mangle_shebangs_exclude_file - file from which to get shebangs to exclude
+# __brp_mangle_shebangs_exclude_from - files to ignore
+# __brp_mangle_shebangs_exclude_from_file - file from which to get files to ignore
+%__brp_mangle_shebangs PYTHON3="%{__python3}" /usr/lib/rpm/redhat/brp-mangle-shebangs %{?__brp_mangle_shebangs_exclude:--shebangs "%{?__brp_mangle_shebangs_exclude}"} %{?__brp_mangle_shebangs_exclude_file:--shebangs-from "%{__brp_mangle_shebangs_exclude_file}"} %{?__brp_mangle_shebangs_exclude_from:--files "%{?__brp_mangle_shebangs_exclude_from}"} %{?__brp_mangle_shebangs_exclude_from_file:--files-from "%{__brp_mangle_shebangs_exclude_from_file}"}
+
+%__os_install_post    \
+    %{?__brp_ldconfig} \
+    %{?__brp_compress} \
+    %{!?__debug_package:\
+    %{?__brp_strip} \
+    %{?__brp_strip_comment_note} \
+    } \
+    %{?__brp_strip_static_archive} \
+    %{?py_auto_byte_compile:%{?__brp_python_bytecompile}} \
+    %{?__brp_python_hardlink} \
+    %{?__brp_mangle_shebangs} \
+%{nil}
+
+%__spec_install_post\
+    %{?__debug_package:%{__debug_install_post}}\
+    %{__arch_install_post}\
+    %{__os_install_post}\
+%{nil}
+
+%install %{?_enable_debug_packages:%{?buildsubdir:%{debug_package}}}\
+%%install\
+%{nil}
+
+#
+# Should missing buildids terminate a build?
+%_missing_build_ids_terminate_build    1
+
+#
+## Automatically compile python files
+%py_auto_byte_compile 1
+
+#
+## Should python bytecompilation errors terminate a build?
+%_python_bytecompile_errors_terminate_build 1
+
+# Use SHA-256 for FILEDIGESTS instead of default MD5
+%_source_filedigest_algorithm 8
+%_binary_filedigest_algorithm 8
+
+# Use XZ compression for binary payloads
+%_binary_payload w2.xzdio
+
+%_hardening_cflags	-specs=/usr/lib/rpm/redhat/redhat-hardened-cc1
+# we don't escape symbols '~', '"', etc. so be careful when changing this
+%_hardening_ldflags	-Wl,-z,now -specs=/usr/lib/rpm/redhat/redhat-hardened-ld
+
+# Harden packages by default for Fedora 23:
+# https://fedorahosted.org/fesco/ticket/1384 (accepted on 2014-02-11)
+# Use "%undefine _hardened_build" to disable.
+%_hardened_build	1
+%_hardened_cflags	%{?_hardened_build:%{_hardening_cflags}}
+%_hardened_ldflags	%{?_hardened_build:%{_hardening_ldflags}}
+
+%_annobin_cflags	-specs=/usr/lib/rpm/redhat/redhat-annobin-cc1
+
+# Add extra information to binary objects created by gcc for Fedora 28:
+# https://pagure.io/fesco/issue/1780 (accepted on 2017-10-30)
+# Use "%undefine _annotated_build" to disable.
+%_annotated_build	1
+%_annotated_cflags	%{?_annotated_build:%{_annobin_cflags}}
+
+# Fail linking if there are undefined symbols.  Required for proper
+# ELF symbol versioning support.  Disabled by default.
+# Use "%define _strict_symbol_defs_build 1" to enable.
+#%_strict_symbol_defs_build	1
+%_ld_symbols_flags		%{?_strict_symbol_defs_build:-Wl,-z,defs}
+
+%__global_compiler_flags	-O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fstack-protector-strong -grecord-gcc-switches %{_hardened_cflags} %{_annotated_cflags}
+
+#==============================================================================
+# ---- Generic auto req/prov filtering macros
+#
+# http://fedoraproject.org/wiki/PackagingDrafts/AutoProvidesAndRequiresFiltering
+
+# prevent anything matching from being scanned for provides
+%filter_provides_in(P) %{expand: \
+%global __filter_prov_cmd %{?__filter_prov_cmd} %{__grep} -v %{-P} '%*' | \
+}
+
+# prevent anything matching from being scanned for requires
+%filter_requires_in(P) %{expand: \
+%global __filter_req_cmd %{?__filter_req_cmd} %{__grep} -v %{-P} '%*' | \
+}
+
+# filter anything matching out of the provides stream
+%filter_from_provides() %{expand: \
+%global __filter_from_prov %{?__filter_from_prov} | %{__sed} -e '%*' \
+}
+
+# filter anything matching out of the requires stream
+%filter_from_requires() %{expand: \
+%global __filter_from_req %{?__filter_from_req} | %{__sed} -e '%*' \
+}
+
+# actually set up the filtering bits
+%filter_setup %{expand: \
+%global _use_internal_dependency_generator 0 \
+%global __deploop() while read FILE; do echo "${FILE}" | /usr/lib/rpm/rpmdeps -%{1}; done | /bin/sort -u \
+%global __find_provides /bin/sh -c "%{?__filter_prov_cmd} %{__deploop P} %{?__filter_from_prov}" \
+%global __find_requires /bin/sh -c "%{?__filter_req_cmd}  %{__deploop R} %{?__filter_from_req}" \
+}

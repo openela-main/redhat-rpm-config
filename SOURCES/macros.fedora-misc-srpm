@@ -1,0 +1,8 @@
+# Some miscellaneous Fedora-related macros
+
+# A directory for rpm macros
+%rpmmacrodir /usr/lib/rpm/macros.d
+
+# A directory for appdata metainfo.  This has changed between releases so a
+# macro is useful.
+%_metainfodir %{_datadir}/metainfo
