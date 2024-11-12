@@ -6,7 +6,7 @@
 
 Summary:              Red Hat specific rpm configuration files
 Name:                 redhat-rpm-config
-Version:              207
+Version:              208
 Release:              1%{?dist}
 # No version specified.
 License:              GPL+
@@ -255,8 +255,12 @@ install -p -m 644 -t %{buildroot}%{_rpmluadir}/fedora/srpm forge.lua
 %doc buildflags.md
 
 %changelog
-* Tue Apr 30 2024 Release Engineering <releng@openela.org> - 207
+* Tue Nov 12 2024 Release Engineering <releng@openela.org> - 208
 - Add OpenELA to dist.sh
+
+* Fri Jul 19 2024 Michal Domonkos <mdomonko@redhat.com> - 208-1
+- brp-mangle-shebangs: Strip env flags when mangling shebangs (RHEL-26961)
+- Fix automatic soname requires on non-versioned symlink targets (RHEL-28767)
 
 * Thu Jan 18 2024 Miro Hrončok <mhroncok@redhat.com> - 207-1
 - brp-python-bytecompile: Pass --invalidation-mode=timestamp to compileall
