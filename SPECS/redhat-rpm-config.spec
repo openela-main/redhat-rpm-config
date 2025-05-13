@@ -6,7 +6,7 @@
 
 Summary:              Red Hat specific rpm configuration files
 Name:                 redhat-rpm-config
-Version:              208
+Version:              209
 Release:              1%{?dist}
 # No version specified.
 License:              GPL+
@@ -37,6 +37,7 @@ Source102:            macros.mono-srpm
 Source103:            macros.nodejs-srpm
 Source104:            macros.ldc-srpm
 Source105:            macros.valgrind-srpm
+Source106:            macros.java-srpm
 
 # Other misc macros
 Source150:            macros.dwz
@@ -255,8 +256,11 @@ install -p -m 644 -t %{buildroot}%{_rpmluadir}/fedora/srpm forge.lua
 %doc buildflags.md
 
 %changelog
-* Tue Nov 12 2024 Release Engineering <releng@openela.org> - 208
+* Tue May 13 2025 Release Engineering <releng@openela.org> - 209
 - Add OpenELA to dist.sh
+
+* Wed Dec 11 2024 Mikolaj Izdebski <mizdebsk@redhat.com> - 209-1
+- Add java_arches macro
 
 * Fri Jul 19 2024 Michal Domonkos <mdomonko@redhat.com> - 208-1
 - brp-mangle-shebangs: Strip env flags when mangling shebangs (RHEL-26961)
