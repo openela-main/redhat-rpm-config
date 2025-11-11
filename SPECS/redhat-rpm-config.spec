@@ -6,7 +6,7 @@
 
 Summary:              Red Hat specific rpm configuration files
 Name:                 redhat-rpm-config
-Version:              209
+Version:              210
 Release:              1%{?dist}
 # No version specified.
 License:              GPL+
@@ -59,9 +59,6 @@ Source202:            brp-python-bytecompile
 # for fixing pyc files reproducibility with marshalparser
 # https://github.com/fedora-python/marshalparser
 Source203:            brp-fix-pyc-reproducibility
-
-# for converting llvm LTO bitcode objects into ELF
-Source204:            brp-llvm-compile-lto-elf
 
 # Dependency generator scripts (deprecated)
 Source300:            find-provides
@@ -128,10 +125,6 @@ Requires:             %{_bindir}/file
 Requires:             %{_bindir}/grep
 Requires:             %{_bindir}/sed
 Requires:             %{_bindir}/xargs
-
-# for brp-llvm-compile-lto-elf
-Requires:             (llvm if clang)
-Requires:             (gawk if clang)
 
 # -fstack-clash-protection and -fcf-protection require GCC 8.
 Conflicts:            gcc < 8.0.1-0.22
@@ -256,8 +249,11 @@ install -p -m 644 -t %{buildroot}%{_rpmluadir}/fedora/srpm forge.lua
 %doc buildflags.md
 
 %changelog
-* Tue May 13 2025 Release Engineering <releng@openela.org> - 209
+* Tue Nov 11 2025 Release Engineering <releng@openela.org> - 210
 - Add OpenELA to dist.sh
+
+* Mon Jun 02 2025 Nikita Popov <npopov@redhat.com> - 210-1
+- Use Fat LTO with Clang
 
 * Wed Dec 11 2024 Mikolaj Izdebski <mizdebsk@redhat.com> - 209-1
 - Add java_arches macro
