@@ -275,8 +275,6 @@ for k,_ in pairs(stripped_flags) do print(k .. " ") end
 # __brp_mangle_shebangs_exclude_from_file - file from which to get files to ignore
 %__brp_mangle_shebangs /usr/lib/rpm/redhat/brp-mangle-shebangs %{?__brp_mangle_shebangs_exclude:--shebangs "%{?__brp_mangle_shebangs_exclude}"} %{?__brp_mangle_shebangs_exclude_file:--shebangs-from "%{__brp_mangle_shebangs_exclude_file}"} %{?__brp_mangle_shebangs_exclude_from:--files "%{?__brp_mangle_shebangs_exclude_from}"} %{?__brp_mangle_shebangs_exclude_from_file:--files-from "%{__brp_mangle_shebangs_exclude_from_file}"}
 
-%__brp_llvm_compile_lto_elf /usr/lib/rpm/redhat/brp-llvm-compile-lto-elf %{build_cflags} %{build_ldflags}
-
 # note: %%__os_install_post_python is defined in python-srpm-macros and contains several policies
 # redhat-rpm-config maintainers, don't remove it from %%__os_install_post unless coordinating the change with Python maintainers
 # packagers, don't undefine the entire macro, see the individual macros in /usr/lib/rpm/macros.d/macros.python-srpm
@@ -297,7 +295,6 @@ for k,_ in pairs(stripped_flags) do print(k .. " ") end
 %{nil}
 
 %__spec_install_post\
-    %[ "%{toolchain}" == "clang" ? "%{?__brp_llvm_compile_lto_elf}" : "%{nil}" ] \
     %{?__debug_package:%{__debug_install_post}}\
     %{__arch_install_post}\
     %{__os_install_post}\
@@ -372,6 +369,7 @@ for k,_ in pairs(stripped_flags) do print(k .. " ") end
 %_frame_pointers_cflags_x86_64 %{expr:0%{?_include_frame_pointers} ? "-mno-omit-leaf-frame-pointer" : ""}
 %_frame_pointers_cflags_aarch64 %{expr:0%{?_include_frame_pointers} ? "-mno-omit-leaf-frame-pointer" : ""}
 %_frame_pointers_cflags_s390x %{expr:0%{?_include_frame_pointers} ? "-mbackchain" : ""}
+%_frame_pointers_cflags_riscv64 %{expr:0%{?_include_frame_pointers} ? "-mno-omit-leaf-frame-pointer" : ""}
 
 # Fail linking if there are undefined symbols.  Required for proper
 # ELF symbol versioning support.  Disabled by default.
@@ -384,7 +382,7 @@ for k,_ in pairs(stripped_flags) do print(k .. " ") end
 %_ld_as_needed		1
 %_ld_as_needed_flags	%{?_ld_as_needed:-Wl,--as-needed}
 
-# aarch64 and s390x currently do not support packed relocations.
+# s390x and riscv64 currently do not support packed relocations.
 %_ld_pack_relocs %[ "%{_arch}" == "x86_64" || "%{_arch}" == "i386" || "%{_arch}" == "ppc64le" || "%{_arch}" == "aarch64" ]
 %_ld_pack_relocs_flags %[0%{?_ld_pack_relocs} ? "-Wl,-z,pack-relative-relocs" : ""]
 
@@ -397,7 +395,7 @@ for k,_ in pairs(stripped_flags) do print(k .. " ") end
 # way we can detect installing an unusable .o/.a file.  This is on the TODO
 # list for F34.
 %_gcc_lto_cflags	-flto=auto -ffat-lto-objects
-%_clang_lto_cflags	-flto=thin
+%_clang_lto_cflags	-flto=thin -ffat-lto-objects
 %_lto_cflags		%{expand:%%{_%{toolchain}_lto_cflags}}
 
 # Default fortification level.

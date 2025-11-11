@@ -4,12 +4,12 @@
 # 2) When making changes, increment the version (in baserelease) by 1.
 #    rpmdev-bumpspec and other tools update the macro below, which is used
 #    in Version: to get the desired effect.
-%global baserelease 289
+%global baserelease 293
 
 Summary: Red Hat specific rpm configuration files
 Name: redhat-rpm-config
 Version: %{baserelease}
-Release: 1%{?dist}.1
+Release: 1%{?dist}
 # config.guess, config.sub are GPL-3.0-or-later WITH Autoconf-exception-generic
 License: GPL-1.0-or-later AND GPL-2.0-or-later AND GPL-3.0-or-later WITH Autoconf-exception-generic AND Boehm-GC
 URL: https://src.fedoraproject.org/rpms/redhat-rpm-config
@@ -59,9 +59,6 @@ Source158: macros.rpmautospec
 # added a python -> python2 conversion for fedora with warning
 # and an echo when the mangling happens
 Source201: brp-mangle-shebangs
-
-# for converting llvm LTO bitcode objects into ELF
-Source204: brp-llvm-compile-lto-elf
 
 # Dependency generator scripts (deprecated)
 Source300: find-provides
@@ -132,10 +129,6 @@ Requires: %{_bindir}/grep
 Requires: %{_bindir}/sed
 Requires: %{_bindir}/xargs
 
-# for brp-llvm-compile-lto-elf
-Requires: (llvm if clang)
-Requires: (gawk if clang)
-
 # -fstack-clash-protection and -fcf-protection require GCC 8.
 Conflicts: gcc < 8.0.1-0.22
 
@@ -166,8 +159,6 @@ install -p -m 755 -t %{buildroot}%{rrcdir} gpgverify
 install -p -m 755 -t %{buildroot}%{rrcdir} brp-*
 
 install -p -m 755 -t %{buildroot}%{rrcdir} find-*
-mkdir -p %{buildroot}%{rrcdir}/find-provides.d
-
 install -p -m 755 -t %{buildroot}%{rrcdir} brp-*
 
 mkdir -p %{buildroot}%{_rpmconfigdir}/macros.d
@@ -259,8 +250,18 @@ install -p -m 644 -t %{buildroot}%{_rpmluadir}/fedora common.lua
 %doc buildflags.md
 
 %changelog
-* Fri Apr 04 2025 Charalampos Stratakis <cstratak@redhat.com> - 288-1.1
-- Add -mbranch-protection=standard to extension builder flags (RHEL-86100)
+* Fri Jun 06 2025 Andrea Bolognani <abologna@redhat.com> - 293-1
+- Add riscv64 config (RHEL-85862)
+
+* Mon Jun 02 2025 Nikita Popov <npopov@redhat.com> - 292-1
+- Use Fat LTO with Clang
+
+* Mon May 12 2025 Michal Domonkos <mdomonko@redhat.com> - 290-1
+- Use upstream versions of find-provides/requires (RHEL-39760)
+- brp-mangle-shebangs: Strip env flags when mangling shebangs (RHEL-84703)
+
+* Fri Apr 04 2025 Charalampos Stratakis <cstratak@redhat.com> - 289-1
+- Add -mbranch-protection=standard to extension builder flags (RHEL-86099)
 
 * Wed Feb 12 2025 Michal Domonkos <mdomonko@redhat.com> - 288-1
 - Fix automatic soname requires on non-versioned symlink targets (RHEL-54592)
