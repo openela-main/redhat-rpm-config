@@ -4,7 +4,7 @@
 # 2) When making changes, increment the version (in baserelease) by 1.
 #    rpmdev-bumpspec and other tools update the macro below, which is used
 #    in Version: to get the desired effect.
-%global baserelease 293
+%global baserelease 295
 
 Summary: Red Hat specific rpm configuration files
 Name: redhat-rpm-config
@@ -250,6 +250,12 @@ install -p -m 644 -t %{buildroot}%{_rpmluadir}/fedora common.lua
 %doc buildflags.md
 
 %changelog
+* Thu Jan 15 2026 Florian Weimer  <fweimer@redhat.com> - 295-1
+- Rebuild after infrastructure updates (RHEL-106147)
+
+* Tue Aug 05 2025 Florian Weimer  <fweimer@redhat.com> - 294-1
+- s390x: Use -mtune=z16 in build flags (RHEL-106147)
+
 * Fri Jun 06 2025 Andrea Bolognani <abologna@redhat.com> - 293-1
 - Add riscv64 config (RHEL-85862)
 

@@ -610,9 +610,9 @@ tuning in the `gcc` package.  These settings are:
   stack alignment guaranteed by the current version of the i386 ABI.
 * **ppc64le**: `-mcpu=power9 -mtune=power10` selects a minimum
   supported CPU level of POWER9 and tunes for POWER10.
-* **s390x**: `-march=z14 -mtune=z15` specifies a minimum supported CPU
+* **s390x**: `-march=z14 -mtune=z16` specifies a minimum supported CPU
   level of z14, while optimizing for a subsequent CPU generation
-  (z15).
+  (z16).
 * **x86_64**: `-march=x86-64-v3 -mtune=generic` builds for the
   [x86-64-v3 micro-architecture level](https://gitlab.com/x86-psABIs/x86-64-ABI/-/blob/master/x86-64-ABI/low-level-sys-info.tex)
   and selects tuning which is expected to beneficial for a broad range
