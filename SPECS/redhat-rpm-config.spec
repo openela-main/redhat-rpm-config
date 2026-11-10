@@ -4,7 +4,7 @@
 # 2) When making changes, increment the version (in baserelease) by 1.
 #    rpmdev-bumpspec and other tools update the macro below, which is used
 #    in Version: to get the desired effect.
-%global baserelease 295
+%global baserelease 296
 
 Summary: Red Hat specific rpm configuration files
 Name: redhat-rpm-config
@@ -250,6 +250,9 @@ install -p -m 644 -t %{buildroot}%{_rpmluadir}/fedora common.lua
 %doc buildflags.md
 
 %changelog
+* Mon Jun 22 2026 Florian Weimer  <fweimer@redhat.com> - 296-1
+- Use -fstack-clash-protection with Clang on AArch64 (RHEL-102329)
+
 * Thu Jan 15 2026 Florian Weimer  <fweimer@redhat.com> - 295-1
 - Rebuild after infrastructure updates (RHEL-106147)
 
