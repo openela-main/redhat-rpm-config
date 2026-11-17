@@ -6,7 +6,7 @@
 
 Summary:              Red Hat specific rpm configuration files
 Name:                 redhat-rpm-config
-Version:              210
+Version:              211
 Release:              1%{?dist}
 # No version specified.
 License:              GPL+
@@ -249,8 +249,11 @@ install -p -m 644 -t %{buildroot}%{_rpmluadir}/fedora/srpm forge.lua
 %doc buildflags.md
 
 %changelog
-* Tue Nov 11 2025 Release Engineering <releng@openela.org> - 210
+* Tue Nov 17 2026 Release Engineering <releng@openela.org> - 211
 - Add OpenELA to dist.sh
+
+* Mon Jun 22 2026 Florian Weimer  <fweimer@redhat.com> - 211-1
+- Use -fstack-clash-protection with Clang on AArch64 (RHEL-104843)
 
 * Mon Jun 02 2025 Nikita Popov <npopov@redhat.com> - 210-1
 - Use Fat LTO with Clang

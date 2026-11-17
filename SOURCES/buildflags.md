@@ -370,7 +370,8 @@ The general (architecture-independent) build flags are:
   vulnerabilities can result where the stack overlaps with the heap,
   or thread stacks spill into other regions of memory.)  This flag is
   fully ABI-compatible and has adds very little run-time overhead.
-  This flag is currently not available on aarch64 with the `clang` toolchain.
+  This flag is currently not available on armhfp (both `gcc` and `clang`
+  toolchains).
 * `-flto=auto`: Enable link-time optimization (LTO), using `make` job server
   integration for parallel processing.  (`gcc` toolchain only)
 * `-ffat-lto-objects`: Generate EFL object files which contain both
